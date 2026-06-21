@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gothic Punk RAG Terminal</title>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black: #050505;
+      --dark: #0d0b10;
+      --panel: #16101b;
+      --blood: #8b0000;
+      --red: #d90429;
+      --purple: #8a2be2;
+      --violet: #c77dff;
+      --silver: #d8d8d8;
+      --gray: #8b8791;
+      --gold: #d6b35a;
+      --line: rgba(199, 125, 255, 0.35);
+      --shadow: rgba(217, 4, 41, 0.28);
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top, rgba(138, 43, 226, 0.22), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(139, 0, 0, 0.22), transparent 35%),
+        linear-gradient(135deg, #030303, #0b0710 50%, #050505);
+      color: var(--silver);
+      font-family: "Georgia", "Times New Roman", serif;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 42px 42px;
+    }
+
+    .site {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 42px;
+    }
+
+    .hero {
+      position: relative;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(135deg, rgba(33, 21, 41, 0.94), rgba(8, 6, 11, 0.96)),
+        repeating-linear-gradient(45deg, transparent 0 12px, rgba(199,125,255,.04) 12px 14px);
+      border-radius: 22px;
+      padding: 34px 36px;
+      box-shadow: 0 0 38px var(--shadow), inset 0 0 42px rgba(0,0,0,.65);
+      overflow: hidden;
+    }
+
+    .hero::before,
+    .hero::after {
+      content: "✦";
+      position: absolute;
+      color: var(--gold);
+      font-size: 68px;
+      opacity: 0.28;
+      top: 20px;
+    }
+
+    .hero::before { left: 24px; }
+    .hero::after { right: 24px; }
+
+    .eyebrow {
+      text-align: center;
+      color: var(--red);
+      letter-spacing: 4px;
+      font-size: 13px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      font-family: Arial, sans-serif;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: clamp(42px, 7vw, 86px);
+      line-height: 0.92;
+      letter-spacing: 3px;
+      color: #f3eef9;
+      text-shadow:
+        0 0 12px rgba(199, 125, 255, .65),
+        3px 3px 0 var(--blood);
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      max-width: 760px;
+      margin: 18px auto 0;
+      text-align: center;
+      color: var(--gray);
+      font-size: 17px;
+      line-height: 1.75;
+    }
+
+    .runes {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 22px;
+      flex-wrap: wrap;
+      font-family: Arial, sans-serif;
+    }
+
+    .rune {
+      border: 1px solid rgba(214,179,90,.55);
+      color: var(--gold);
+      padding: 7px 13px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.28);
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 22px;
+      margin-top: 24px;
+    }
+
+    .sidebar,
+    .terminal {
+      border: 1px solid var(--line);
+      background: rgba(13, 11, 16, 0.88);
+      border-radius: 20px;
+      box-shadow: inset 0 0 28px rgba(0,0,0,.65);
+    }
+
+    .sidebar { padding: 22px; }
+
+    .section-title {
+      color: var(--violet);
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      border-left: 3px solid var(--red);
+      padding-left: 10px;
+    }
+
+    .steps {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 26px;
+    }
+
+    .step {
+      padding: 13px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: linear-gradient(135deg, rgba(33,21,41,.75), rgba(0,0,0,.28));
+      border-radius: 14px;
+    }
+
+    .step b {
+      display: block;
+      color: #fff;
+      margin-bottom: 4px;
+      font-size: 15px;
+    }
+
+    .step span {
+      color: var(--gray);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .sigil {
+      margin-top: 20px;
+      padding: 18px;
+      border: 1px dashed rgba(214,179,90,.45);
+      border-radius: 16px;
+      text-align: center;
+      color: var(--gold);
+      background: rgba(214,179,90,.05);
+    }
+
+    .sigil .mark {
+      font-size: 44px;
+      margin-bottom: 8px;
+    }
+
+    .sigil p {
+      color: var(--gray);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .terminal { overflow: hidden; }
+
+    .terminal-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 14px 18px;
+      background: linear-gradient(90deg, #130a18, #240915, #130a18);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .dots {
+      display: flex;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      box-shadow: 0 0 10px currentColor;
+    }
+
+    .dot.red { background: var(--red); color: var(--red); }
+    .dot.purple { background: var(--purple); color: var(--purple); }
+    .dot.gold { background: var(--gold); color: var(--gold); }
+
+    .url {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(0,0,0,.45);
+      color: var(--gray);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-family: Consolas, monospace;
+      font-size: 13px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .badge {
+      color: #fff;
+      background: linear-gradient(135deg, var(--blood), var(--purple));
+      border: 1px solid rgba(255,255,255,.14);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-family: Arial, sans-serif;
+      font-size: 11px;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .frame-wrap {
+      position: relative;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(0,0,0,.88), rgba(33,21,41,.52));
+    }
+
+    .frame-wrap::before {
+      content: "";
+      position: absolute;
+      inset: 16px;
+      border: 1px solid rgba(214,179,90,.28);
+      pointer-events: none;
+      z-index: 2;
+      border-radius: 14px;
+    }
+
+    iframe {
+      position: relative;
+      z-index: 1;
+      display: block;
+      width: 100%;
+      height: 640px;
+      border: 0;
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 0 26px rgba(199,125,255,.18);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 22px;
+    }
+
+    .card {
+      border: 1px solid rgba(199,125,255,.28);
+      background: rgba(22, 16, 27, .8);
+      border-radius: 18px;
+      padding: 18px;
+      min-height: 126px;
+    }
+
+    .card h3 {
+      color: var(--gold);
+      margin-bottom: 8px;
+      font-size: 18px;
+    }
+
+    .card p {
+      color: var(--gray);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    footer {
+      margin-top: 28px;
+      text-align: center;
+      color: #6f6877;
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .cards { grid-template-columns: 1fr; }
+      .hero { padding: 28px 20px; }
+      iframe { height: 560px; }
+      .terminal-top { flex-wrap: wrap; }
+      .url { order: 3; flex-basis: 100%; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="site">
+    <header class="hero">
+      <div class="eyebrow">Gothic Punk · RAG Knowledge Engine</div>
+      <h1>Dark Archive</h1>
+      <p class="subtitle">
+        以哥德式黑紫紅金視覺包裝你的 Gradio RAG 系統。保留原本 Hugging Face Space，
+        直接嵌入 ChromaDB 文件問答介面。
+      </p>
+      <div class="runes">
+        <span class="rune">Gradio</span>
+        <span class="rune">ChromaDB</span>
+        <span class="rune">RAG</span>
+        <span class="rune">Vector Search</span>
+        <span class="rune">Hugging Face</span>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="sidebar">
+        <div class="section-title">Ritual Flow</div>
+
+        <div class="steps">
+          <div class="step">
+            <b>01 · Upload</b>
+            <span>上傳 PDF / DOCX 文件，作為知識庫來源。</span>
+          </div>
+          <div class="step">
+            <b>02 · Chunk</b>
+            <span>將文件切成片段，方便後續語意檢索。</span>
+          </div>
+          <div class="step">
+            <b>03 · Embed</b>
+            <span>使用模型把文字轉成向量，存入 ChromaDB。</span>
+          </div>
+          <div class="step">
+            <b>04 · Ask</b>
+            <span>輸入問題，由系統檢索相關片段並生成回答。</span>
+          </div>
+        </div>
+
+        <div class="section-title">System Charm</div>
+        <div class="sigil">
+          <div class="mark">☽ ✦ ☾</div>
+          <p>若畫面停在 Preparing Space，請回 Hugging Face 查看 Build / Container Logs。</p>
+        </div>
+      </aside>
+
+      <section class="terminal">
+        <div class="terminal-top">
+          <div class="dots">
+            <span class="dot red"></span>
+            <span class="dot purple"></span>
+            <span class="dot gold"></span>
+          </div>
+
+          <div class="url">https://sandra1165-rab-chromadb-gradio.hf.space</div>
+
+          <div class="badge">HF Space Live</div>
+        </div>
+
+        <div class="frame-wrap">
+          <iframe
+            src="https://sandra1165-rab-chromadb-gradio.hf.space"
+            frameborder="0"
+            width="850"
+            height="450"
+            title="Gradio RAG System"
+            allow="clipboard-read; clipboard-write; microphone"
+          ></iframe>
+        </div>
+      </section>
+    </main>
+
+    <section class="cards">
+      <article class="card">
+        <h3>Dark UI</h3>
+        <p>黑底、血紅、紫光與金色邊框，營造哥德龐克式系統介面。</p>
+      </article>
+
+      <article class="card">
+        <h3>Embedded Gradio</h3>
+        <p>保留原始 Gradio，不改你的 Python 後端，只用 iframe 包裝展示。</p>
+      </article>
+
+      <article class="card">
+        <h3>RAG Ready</h3>
+        <p>適合文件問答、知識庫展示、作品集與 GitHub Pages 靜態網站。</p>
+      </article>
+    </section>
+
+    <footer>
+      Gothic Punk RAG Interface · Powered by Hugging Face Spaces
+    </footer>
+  </div>
+</body>
+</html>
