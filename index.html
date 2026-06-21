@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CHROMA//PUNK · RAG SYSTEM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=Oswald:wght@400;700&family=VT323&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black:   #0a0a0a;
+  --dark:    #111111;
+  --darker:  #0d0d0d;
+  --yellow:  #f5e642;
+  --pink:    #ff2d78;
+  --cyan:    #00ffe7;
+  --purple:  #b44fff;
+  --red:     #ff3232;
+  --white:   #f0f0f0;
+  --gray:    #2a2a2a;
+  --gray2:   #1a1a1a;
+  --mono:    'Share Tech Mono', monospace;
+  --display: 'Bebas Neue', sans-serif;
+  --body:    'Oswald', sans-serif;
+  --vt:      'VT323', monospace;
+}
+
+html, body {
+  min-height: 100%;
+  background: var(--black);
+  color: var(--white);
+  font-family: var(--mono);
+  overflow-x: hidden;
+}
+
+/* scanline overlay */
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 999; pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0,0,0,.13) 0px,
+    rgba(0,0,0,.13) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+/* ── Glitch header ── */
+.header {
+  background: var(--black);
+  border-bottom: 3px solid var(--yellow);
+  padding: 0 28px;
+  position: relative;
+  overflow: hidden;
+}
+
+.header-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 64px;
+  position: relative; z-index: 1;
+}
+
+/* diagonal stripe bg */
+.header::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(
+    -55deg,
+    transparent 0px, transparent 18px,
+    rgba(245,230,66,.04) 18px, rgba(245,230,66,.04) 20px
+  );
+}
+
+.logo-group { display: flex; align-items: center; gap: 14px; }
+
+.logo-box {
+  width: 42px; height: 42px;
+  border: 2px solid var(--yellow);
+  background: var(--yellow);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  clip-path: polygon(0 0, 90% 0, 100% 10%, 100% 100%, 10% 100%, 0 90%);
+}
+
+.logo-box span {
+  font-family: var(--display);
+  font-size: 22px; color: var(--black); line-height: 1;
+}
+
+.logo-text {
+  font-family: var(--display);
+  font-size: 28px; letter-spacing: 3px;
+  color: var(--white);
+  line-height: 1;
+}
+
+.logo-text em {
+  color: var(--yellow); font-style: normal;
+}
+
+.logo-sub {
+  font-family: var(--mono);
+  font-size: 9px; letter-spacing: 2px;
+  color: var(--pink); text-transform: uppercase;
+  margin-top: 2px;
+}
+
+/* glitch effect on logo */
+@keyframes glitch {
+  0%,100% { text-shadow: none; transform: none; }
+  92%      { text-shadow: none; transform: none; }
+  93%      { text-shadow: 2px 0 var(--pink), -2px 0 var(--cyan); transform: translate(1px); }
+  94%      { text-shadow: -2px 0 var(--pink), 2px 0 var(--cyan); transform: translate(-1px); }
+  95%      { text-shadow: none; transform: none; }
+  97%      { text-shadow: 3px 0 var(--cyan); transform: skewX(2deg); }
+  98%      { text-shadow: none; transform: none; }
+}
+
+.logo-text { animation: glitch 4s infinite; }
+
+/* header right */
+.header-right { display: flex; align-items: center; gap: 12px; }
+
+.status-chip {
+  display: flex; align-items: center; gap: 6px;
+  border: 1px solid var(--cyan);
+  padding: 5px 12px;
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--cyan);
+  clip-path: polygon(0 0, 95% 0, 100% 30%, 100% 100%, 5% 100%, 0 70%);
+}
+
+.blink-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--cyan);
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+.version-tag {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--gray);
+  border: 1px solid var(--gray);
+  padding: 4px 10px;
+}
+
+/* ── Nav ── */
+.nav {
+  display: flex; gap: 0;
+  border-bottom: 2px solid var(--gray);
+  background: var(--darker);
+  padding: 0 28px;
+  overflow-x: auto;
+}
+
+.nav-item {
+  font-family: var(--body); font-size: 12px;
+  font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--gray);
+  padding: 11px 20px;
+  border-right: 1px solid var(--gray);
+  cursor: default;
+  position: relative;
+  transition: color .15s;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.nav-item:first-child { border-left: 1px solid var(--gray); }
+
+.nav-item.active {
+  color: var(--yellow);
+  background: rgba(245,230,66,.06);
+}
+
+.nav-item.active::after {
+  content: '';
+  position: absolute; bottom: -2px; left: 0; right: 0;
+  height: 2px; background: var(--yellow);
+}
+
+.nav-item:hover { color: var(--white); }
+
+/* ── Body grid ── */
+.body-wrap {
+  display: grid;
+  grid-template-columns: 220px 1fr 220px;
+  min-height: calc(100vh - 130px);
+}
+
+/* ── Sidebars ── */
+.sidebar {
+  background: var(--gray2);
+  border-right: 1px solid #2a2a2a;
+  padding: 20px 16px;
+  display: flex; flex-direction: column; gap: 22px;
+}
+
+.sidebar.right { border-right: none; border-left: 1px solid #2a2a2a; }
+
+.s-block { }
+
+.s-label {
+  font-family: var(--body); font-size: 10px;
+  font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--pink);
+  border-left: 3px solid var(--pink);
+  padding-left: 8px; margin-bottom: 12px;
+}
+
+/* Pipeline */
+.pipe { display: flex; flex-direction: column; gap: 0; }
+
+.pipe-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #1f1f1f;
+  position: relative;
+}
+
+.pipe-item:last-child { border-bottom: none; }
+
+.pipe-n {
+  font-family: var(--vt); font-size: 20px;
+  color: var(--yellow); line-height: 1; flex-shrink: 0;
+  width: 22px; text-align: center;
+}
+
+.pipe-txt strong {
+  display: block; font-family: var(--body);
+  font-size: 12px; font-weight: 700; letter-spacing: .5px;
+  color: var(--white); margin-bottom: 1px;
+}
+
+.pipe-txt span { font-size: 10px; color: #555; line-height: 1.4; }
+
+/* Tags */
+.tag-cloud { display: flex; flex-wrap: wrap; gap: 5px; }
+
+.tag {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: .5px; text-transform: uppercase;
+  padding: 3px 8px;
+  border: 1px solid var(--purple);
+  color: var(--purple);
+  clip-path: polygon(4px 0%, 100% 0%, calc(100% - 4px) 100%, 0% 100%);
+}
+
+.tag.y { border-color: var(--yellow); color: var(--yellow); }
+.tag.c { border-color: var(--cyan); color: var(--cyan); }
+
+/* Tip block */
+.tip {
+  border: 1px solid #2a2a2a;
+  border-left: 3px solid var(--cyan);
+  padding: 10px 12px;
+  background: rgba(0,255,231,.03);
+}
+
+.tip-head {
+  font-family: var(--body); font-size: 10px;
+  font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--cyan); margin-bottom: 6px;
+}
+
+.tip p {
+  font-size: 10.5px; color: #666; line-height: 1.6;
+}
+
+/* Stat blocks */
+.stat-row { display: flex; flex-direction: column; gap: 6px; }
+
+.stat-block {
+  background: var(--gray);
+  padding: 8px 10px;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
+}
+
+.stat-val {
+  font-family: var(--vt); font-size: 24px; color: var(--yellow); line-height: 1;
+}
+
+.stat-lbl {
+  font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: #555; margin-top: 2px;
+}
+
+/* Ticker */
+.ticker-wrap {
+  overflow: hidden;
+  border-top: 1px solid #222;
+  border-bottom: 1px solid #222;
+  background: var(--black);
+  padding: 6px 0;
+  margin-top: auto;
+}
+
+.ticker {
+  display: inline-flex; gap: 40px;
+  animation: ticker 18s linear infinite;
+  white-space: nowrap;
+}
+
+@keyframes ticker { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+.tick-item {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: #444;
+}
+
+.tick-item span { color: var(--pink); }
+
+/* ── Centre ── */
+.centre { padding: 24px; background: var(--dark); }
+
+/* top bar of app */
+.app-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.app-title {
+  font-family: var(--display); font-size: 22px;
+  letter-spacing: 3px; color: var(--white);
+}
+
+.app-title span { color: var(--yellow); }
+
+.app-badges { display: flex; gap: 8px; }
+
+.badge {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 4px 10px;
+  clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+}
+
+.badge-pink { background: var(--pink); color: var(--black); }
+.badge-cyan { background: var(--cyan); color: var(--black); }
+
+/* iframe container */
+.iframe-shell {
+  border: 1px solid #2a2a2a;
+  border-top: 3px solid var(--yellow);
+  position: relative;
+  background: #000;
+}
+
+.iframe-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 14px;
+  background: var(--black);
+  border-bottom: 1px solid #222;
+}
+
+.bar-dots { display: flex; gap: 5px; }
+.bar-dot { width: 9px; height: 9px; border-radius: 0; }
+.bd-r { background: var(--red); }
+.bd-y { background: var(--yellow); }
+.bd-g { background: #39ff14; }
+
+.bar-url {
+  flex: 1;
+  display: flex; align-items: center; gap: 6px;
+  background: #111; border: 1px solid #2a2a2a;
+  padding: 4px 10px;
+}
+
+.bar-url-icon { color: var(--cyan); font-size: 10px; }
+
+.bar-url span {
+  font-family: var(--mono); font-size: 10px;
+  color: #555; letter-spacing: .5px;
+}
+
+.bar-url span em { color: var(--cyan); font-style: normal; }
+
+.iframe-shell iframe {
+  display: block; width: 100%; height: 540px; border: none;
+}
+
+/* noise scanline on iframe */
+.iframe-noise {
+  position: absolute; inset: 0; pointer-events: none; z-index: 2;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px, transparent 2px,
+    rgba(0,0,0,.06) 2px, rgba(0,0,0,.06) 4px
+  );
+}
+
+/* bottom info strip */
+.info-strip {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 12px; margin-top: 16px;
+}
+
+.info-cell {
+  background: var(--gray2);
+  border: 1px solid #222;
+  border-top: 2px solid var(--purple);
+  padding: 12px 14px;
+}
+
+.info-cell-head {
+  font-family: var(--body); font-size: 10px;
+  font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--purple); margin-bottom: 6px;
+}
+
+.info-cell p {
+  font-size: 10.5px; color: #555; line-height: 1.65;
+}
+
+/* ── Footer ── */
+footer {
+  background: var(--black);
+  border-top: 3px solid var(--pink);
+  padding: 14px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+footer .f-left {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: #333;
+}
+
+footer .f-left span { color: var(--pink); }
+
+.f-links { display: flex; gap: 20px; }
+
+.f-links a {
+  font-family: var(--body); font-size: 11px;
+  font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--yellow); text-decoration: none;
+  border-bottom: 1px solid rgba(245,230,66,.3);
+  padding-bottom: 1px;
+  transition: color .15s;
+}
+
+.f-links a:hover { color: var(--cyan); border-color: var(--cyan); }
+
+/* ── Responsive ── */
+@media (max-width: 860px) {
+  .body-wrap { grid-template-columns: 1fr; }
+  .sidebar { border: none; border-bottom: 1px solid #222; }
+  .sidebar.right { border-left: none; border-top: 1px solid #222; }
+  .nav { padding: 0 14px; }
+  .centre { padding: 16px; }
+  .info-strip { grid-template-columns: 1fr; }
+  footer { flex-direction: column; gap: 10px; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo-group">
+      <div class="logo-box"><span>C</span></div>
+      <div>
+        <div class="logo-text">CHROMA<em>//</em>PUNK</div>
+        <div class="logo-sub">RAG · Vector Database · Knowledge System</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="status-chip">
+        <div class="blink-dot"></div>
+        SYS_ONLINE
+      </div>
+      <div class="version-tag">v0.1.0</div>
+    </div>
+  </div>
+</header>
+
+<!-- Nav -->
+<nav class="nav">
+  <div class="nav-item active">// Query</div>
+  <div class="nav-item">// Upload</div>
+  <div class="nav-item">// Index</div>
+  <div class="nav-item">// Vectors</div>
+  <div class="nav-item">// Config</div>
+</nav>
+
+<!-- Body -->
+<div class="body-wrap">
+
+  <!-- Left sidebar -->
+  <aside class="sidebar">
+
+    <div class="s-block">
+      <div class="s-label">RAG Pipeline</div>
+      <div class="pipe">
+        <div class="pipe-item">
+          <div class="pipe-n">1</div>
+          <div class="pipe-txt"><strong>Upload Doc</strong><span>PDF / TXT / MD</span></div>
+        </div>
+        <div class="pipe-item">
+          <div class="pipe-n">2</div>
+          <div class="pipe-txt"><strong>Chunk Split</strong><span>語意切分</span></div>
+        </div>
+        <div class="pipe-item">
+          <div class="pipe-n">3</div>
+          <div class="pipe-txt"><strong>Embed</strong><span>向量嵌入編碼</span></div>
+        </div>
+        <div class="pipe-item">
+          <div class="pipe-n">4</div>
+          <div class="pipe-txt"><strong>ChromaDB</strong><span>向量索引儲存</span></div>
+        </div>
+        <div class="pipe-item">
+          <div class="pipe-n">5</div>
+          <div class="pipe-txt"><strong>Retrieve</strong><span>語意相似搜尋</span></div>
+        </div>
+        <div class="pipe-item">
+          <div class="pipe-n">6</div>
+          <div class="pipe-txt"><strong>Generate</strong><span>LLM 生成回覆</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="s-block">
+      <div class="s-label">Tech Stack</div>
+      <div class="tag-cloud">
+        <span class="tag y">ChromaDB</span>
+        <span class="tag y">RAG</span>
+        <span class="tag c">Gradio</span>
+        <span class="tag c">Python</span>
+        <span class="tag">Embed</span>
+        <span class="tag">LangChain</span>
+        <span class="tag y">LLM</span>
+        <span class="tag c">HF</span>
+      </div>
+    </div>
+
+    <div class="s-block">
+      <div class="s-label">Tip</div>
+      <div class="tip">
+        <div class="tip-head">// Usage</div>
+        <p>輸入清晰具體的問題，系統將從向量庫中精準檢索最相關片段。</p>
+      </div>
+    </div>
+
+    <div class="ticker-wrap">
+      <div class="ticker">
+        <span class="tick-item">CHROMADB <span>■</span></span>
+        <span class="tick-item">VECTOR_SEARCH <span>■</span></span>
+        <span class="tick-item">RAG_SYSTEM <span>■</span></span>
+        <span class="tick-item">HF_SPACES <span>■</span></span>
+        <span class="tick-item">EMBEDDINGS <span>■</span></span>
+        <span class="tick-item">CHROMADB <span>■</span></span>
+        <span class="tick-item">VECTOR_SEARCH <span>■</span></span>
+        <span class="tick-item">RAG_SYSTEM <span>■</span></span>
+        <span class="tick-item">HF_SPACES <span>■</span></span>
+        <span class="tick-item">EMBEDDINGS <span>■</span></span>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- Centre -->
+  <main class="centre">
+
+    <div class="app-header">
+      <div class="app-title">QUERY <span>//</span> TERMINAL</div>
+      <div class="app-badges">
+        <span class="badge badge-pink">LIVE</span>
+        <span class="badge badge-cyan">ChromaDB</span>
+      </div>
+    </div>
+
+    <div class="iframe-shell">
+      <div class="iframe-bar">
+        <div class="bar-dots">
+          <div class="bar-dot bd-r"></div>
+          <div class="bar-dot bd-y"></div>
+          <div class="bar-dot bd-g"></div>
+        </div>
+        <div class="bar-url">
+          <span class="bar-url-icon">▶</span>
+          <span><em>https://</em>sandra1165-rab-chromadb-gradio.hf.space</span>
+        </div>
+        <span class="badge badge-pink" style="font-size:8px;padding:3px 8px;">HF SPACE</span>
+      </div>
+      <div class="iframe-noise"></div>
+      <iframe
+        src="https://sandra1165-rab-chromadb-gradio.hf.space"
+        title="ChromaDB RAG System"
+        allow="accelerometer; clipboard-write; microphone"
+        loading="lazy"
+      ></iframe>
+    </div>
+
+    <div class="info-strip">
+      <div class="info-cell">
+        <div class="info-cell-head">// About</div>
+        <p>ChromaDB 向量資料庫結合 LLM，實現語意精準檢索與生成式回答。</p>
+      </div>
+      <div class="info-cell">
+        <div class="info-cell-head">// Format</div>
+        <p>支援 PDF、TXT、Markdown，建議每份文件控制在 50 頁以內。</p>
+      </div>
+      <div class="info-cell">
+        <div class="info-cell-head">// Host</div>
+        <p>部署於 Hugging Face Spaces，公開服務，無需本地安裝。</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Right sidebar -->
+  <aside class="sidebar right">
+
+    <div class="s-block">
+      <div class="s-label">System Stats</div>
+      <div class="stat-row">
+        <div class="stat-block">
+          <div class="stat-val">ON</div>
+          <div class="stat-lbl">System Status</div>
+        </div>
+        <div class="stat-block">
+          <div class="stat-val">RAG</div>
+          <div class="stat-lbl">Architecture</div>
+        </div>
+        <div class="stat-block">
+          <div class="stat-val">v0.1</div>
+          <div class="stat-lbl">Version</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="s-block">
+      <div class="s-label">// Warning</div>
+      <div class="tip" style="border-left-color:var(--yellow);">
+        <div class="tip-head" style="color:var(--yellow);">// Note</div>
+        <p>若畫面未顯示，請確認 HF Space 已開啟 iframe embedding 權限。</p>
+      </div>
+    </div>
+
+    <div class="s-block">
+      <div class="s-label">// Links</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <a href="https://www.trychroma.com" target="_blank" rel="noopener"
+           style="font-family:var(--mono);font-size:10px;color:var(--cyan);letter-spacing:1px;text-decoration:none;border:1px solid #222;padding:7px 10px;display:block;transition:border-color .15s;"
+           onmouseover="this.style.borderColor='var(--cyan)'" onmouseout="this.style.borderColor='#222'">
+          ▶ ChromaDB Docs
+        </a>
+        <a href="https://huggingface.co/spaces" target="_blank" rel="noopener"
+           style="font-family:var(--mono);font-size:10px;color:var(--purple);letter-spacing:1px;text-decoration:none;border:1px solid #222;padding:7px 10px;display:block;transition:border-color .15s;"
+           onmouseover="this.style.borderColor='var(--purple)'" onmouseout="this.style.borderColor='#222'">
+          ▶ HF Spaces
+        </a>
+      </div>
+    </div>
+
+    <div class="ticker-wrap" style="margin-top:auto;">
+      <div class="ticker" style="animation-direction:reverse;">
+        <span class="tick-item">PUNK <span>■</span></span>
+        <span class="tick-item">RAG <span>■</span></span>
+        <span class="tick-item">AI <span>■</span></span>
+        <span class="tick-item">VECTOR <span>■</span></span>
+        <span class="tick-item">CHROMA <span>■</span></span>
+        <span class="tick-item">PUNK <span>■</span></span>
+        <span class="tick-item">RAG <span>■</span></span>
+        <span class="tick-item">AI <span>■</span></span>
+        <span class="tick-item">VECTOR <span>■</span></span>
+        <span class="tick-item">CHROMA <span>■</span></span>
+      </div>
+    </div>
+
+  </aside>
+
+</div>
+
+<!-- Footer -->
+<footer>
+  <div class="f-left">© 2026 <span>CHROMA//PUNK</span> · Powered by ChromaDB · HF Spaces</div>
+  <div class="f-links">
+    <a href="https://www.trychroma.com" target="_blank" rel="noopener">ChromaDB</a>
+    <a href="https://huggingface.co/spaces" target="_blank" rel="noopener">HF Spaces</a>
+  </div>
+</footer>
+
+</body>
+</html>
